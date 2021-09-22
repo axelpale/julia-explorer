@@ -1,0 +1,486 @@
+<!DOCTYPE html>
+<html><head>
+  <meta charset="utf-8">
+
+  <title>Julia</title>
+  <style>
+    body { background: black; color: white; }
+    .monitor { color: gray; }
+  </style>
+</head><body>
+  <canvas id="canvas" width="600" height="600">
+  </canvas>
+
+  <h3>Julia Parameters</h3>
+
+  <div>
+    <input type="range" id="power" name="power"
+           min="2" max="10" value="2" step="1">
+    <label for="power">z^</label>
+  </div>
+
+  <div>
+    <input type="range" id="creal" name="creal"
+           min="-2" max="2" value="0" step="0.01">
+    <label for="creal">Re(c)</label>
+  </div>
+
+  <div>
+    <input type="range" id="cimag" name="cimag"
+           min="-2" max="2" value="1" step="0.01">
+    <label for="cimag">Im(c)</label>
+  </div>
+
+  <h3>Color</h3>
+
+  <div>
+    <input type="range" id="expos" name="expos"
+           min="0" max="16" value="4" step="0.5">
+    <label for="expos">Exposure</label>
+    <span id="exposmonitor" class="monitor"></span>
+  </div>
+
+  <h3>Viewport</h3>
+
+  <div>
+    <input type="number" id="offreal" name="offreal"
+           min="-2" max="2" value="0" style="width: 120px">
+    <label for="offreal">Re(center)</label>
+  </div>
+  <div>
+    <input type="number" id="offimag" name="offimag"
+           min="-2" max="2" value="0" style="width: 120px">
+    <label for="offimag">Im(center)</label>
+  </div>
+  <div>
+    <input type="number" id="scale" name="scale"
+           min="100" value="200" step="100" style="width: 120px">
+    <label for="scale">Scale</label>
+  </div>
+
+  <div>
+    <input type="number" id="width" name="width"
+           min="64" max="16384" value="600" step="1">
+    <label for="width">Width</label>
+  </div>
+
+  <div>
+    <input type="number" id="height" name="height"
+           min="64" max="16384" value="600" step="1">
+    <label for="height">Height</label>
+  </div>
+
+  <button type="button" id="viewport-button">Apply Viewport Settings</button>
+  <button type="button" id="viewport-reset">Reset Viewport Settings</button>
+
+  <h3>Pixel Iteration</h3>
+
+  <div>
+    <input type="number" id="iterations" name="iterations"
+           min="2" max="32000" value="512" step="1">
+    <label for="iterations">Iterations until stable</label>
+  </div>
+
+  <div>
+    <input type="number" id="escape" name="escape"
+           min="2" max="20000" value="256" step="1">
+    <label for="escape">Escape value</label>
+  </div>
+
+  <button type="button" id="iteration-button">Apply Iteration Settings</button>
+
+  <div style="height: 10rem"></div>
+
+  <script>
+  (function () {
+    const opaque = 255
+    const sqrt = Math.sqrt
+
+    const limit = function (a, min, max) {
+      return Math.min(Math.max(a, min), max)
+    }
+
+    const rgba = function (r, g, b, a) {
+      return {
+        r: r,
+        g: g,
+        b: b,
+        a: a
+      }
+    }
+    const rainbow = function (l) {
+      l = limit(l, 0, 255)
+      return {
+        r: Math.floor(255 * Math.sin(Math.PI * 2 * l / 255)),
+        g: Math.floor(255 * Math.cos(Math.PI * 2 * l / 255)),
+        b: Math.floor(255 * Math.sin(Math.PI * l / 255)),
+        a: opaque
+      }
+    }
+    const flame = function (l) {
+      l = limit(l, 0, 255)
+      return {
+        r: limit(9 * l - 256, 0, 240) + 15,
+        g: limit(5 * l - 256, 0, 255),
+        b: limit(3 * l - 256, 0, 255),
+        a: opaque
+      }
+    }
+    const gray = function (l) {
+      l = limit(l, 0, 255)
+      return {
+        r: l,
+        g: l,
+        b: l,
+        a: opaque
+      }
+    }
+
+    const setPixel = function (imageData, x, y, color) {
+      var index = 4 * (x + y * imageData.width)
+      imageData.data[index+0] = color.r
+      imageData.data[index+1] = color.g
+      imageData.data[index+2] = color.b
+      imageData.data[index+3] = color.a
+    }
+
+    const complexAbs = function (z) {
+      return Math.sqrt(z.r * z.r + z.i * z.i)
+    }
+
+    const complexAdd = function (x, y) {
+      return {
+        r: x.r + y.r,
+        i: x.i + y.i
+      }
+    }
+
+    const complexMultiply = function (x, y) {
+      // Parameters
+      //   x
+      //     { r, i }
+      //   y
+      //     { r, i }
+      //
+      const ac = x.r * y.r
+      const bd = x.i * y.i
+      return {
+        r: ac - bd,
+        i: (x.r + x.i) * (y.r + y.i) - ac - bd
+      }
+    }
+
+    const complexSqrt = function (z) {
+      const abs = complexAbs(z)
+      const r = sqrt((z.r + abs) / 2)
+      const i = Math.sign(z.i) * sqrt((-z.r + abs) / 2)
+      // There are two roots.
+      // TODO use some standard method to pick one
+      return {
+        r: r,
+        i: i
+      }
+      // if (z.i >= 0) {
+      //   return {
+      //     r: r,
+      //     i: i
+      //   }
+      // } // else
+      // return {
+      //   r: -r,
+      //   i: -i
+      // }
+    }
+
+    const makeJulia = function (power, c) {
+      return function (z) {
+        // Loop instead of
+        // const z2 = complexMultiply(z, z)
+        // const z3 = complexMultiply(z2, z)
+        let product = z
+        for (let i = 1; i < power; i += 1) {
+          product = complexMultiply(product, z)
+        }
+        // z^n + c
+        return complexAdd(product, c)
+      }
+    }
+
+    const convergence = function (params) {
+      // Iterations before max value reached.
+      //
+      // Parameters
+      //   params, object with props
+      //     init
+      //       { r, i }
+      //     iteratee
+      //       fn: { r, i } => { r, i }
+      //     iterations
+      //       integer
+      //     escapeValue
+      //       number
+      //
+      // Return
+      //   number of iterations
+      //
+      const iterations = params.iterations
+      const valueLimit = params.escapeValue
+      let val = params.init
+      let i = 0
+      let magnitude = 0
+
+      do {
+        val = params.iteratee(val)
+        magnitude = complexAbs(val)
+        i += 1
+      } while (i < iterations && magnitude < valueLimit)
+
+      return i
+    }
+
+    const forEachPixel = function (imageData, iteratee) {
+      for (let x = 0; x < imageData.width; x += 1) {
+        for (let y = 0; y < imageData.height; y += 1) {
+          iteratee(imageData, x, y)
+        }
+      }
+    }
+
+    const pxToComplex = function (x, y, scale, offset) {
+      // Normalize.
+      const r = (x - canvas.width / 2) / scale + offset.r
+      const i = (y - canvas.height / 2) / scale + offset.i
+      return {
+        r: r,
+        i: i
+      }
+    }
+
+    const complexToPx = function (z, scale, offset) {
+      // Parameters
+      //   z
+      //     a { r, i } complex number
+      //   scale
+      //   offset
+      //     { r, i }
+      //
+      // Return
+      //   a pixel position as { x, y }
+      //
+      // Deduce from complexToPx
+      // <=> z.r - offset.r = (x - canvas.width / 2) / scale
+      //     z.i - offset.i = (y - canvas.height / 2) / scale
+      // <=> scale * (z.r - offset.r) + canvas.width / 2 = x
+      //     scale * (z.i - offset.i) + canvas.height / 2 = y
+      //
+      return {
+        x: scale * (z.r - offset.r) + canvas.width / 2,
+        y: scale * (z.i - offset.i) + canvas.height / 2
+      }
+    }
+
+    const drawIteratee = function (ctx, params) {
+      // Parameters
+      //   ctx
+      //     drawing context
+      //   params
+      //     width
+      //       integer
+      //     height
+      //       integer
+      //     iteratee
+      //       fn { r, i } => { r, i }
+      //     scale
+      //       number
+      //     offset
+      //       { r, i }
+      //     exposure
+      //       number
+      //     iterations
+      //       integer
+      //     escapeValue
+      //       number
+      //
+
+      // Begin with empty canvas
+      const img = ctx.getImageData(0, 0, params.width, params.height)
+
+      // Compute each pixel
+      const iteratee = params.iteratee
+      const scale = params.scale
+      const offset = params.offset
+      const exposure = params.exposure
+      const iterations = params.iterations
+      const escapeValue = params.escapeValue
+      forEachPixel(img, (imageData, x, y) => {
+        // Normalize.
+        const z = pxToComplex(x, y, scale, offset)
+        // Does iteratee converge at z?
+        const conv = convergence({
+          init: z,
+          iteratee: iteratee,
+          iterations: iterations,
+          escapeValue: escapeValue
+        })
+        // Pick color
+        const lightness = conv * exposure
+        const color = flame(lightness)
+        // Draw pixel
+        setPixel(imageData, x, y, color)
+      })
+
+      // Draw image on canvas
+      ctx.putImageData(img, 0, 0)
+    }
+
+    // Draw single image.
+    // Scale 200 for 600x600
+    // Scale 400 for 1000x1000
+    // Scale 800 for 2000x2000
+    // Scale 2400 for 6000x6000
+    // const c = { r: 0.74, i: 0.68366 }
+    // const scale = Math.round(canvas.width / 3)
+    // const offset = { r: 0, i: 0.05 }
+    // drawIteratee(makeJulia(c), scale, offset)
+
+    // Animate.
+    // let c = { r: 0.5, i: -0.77 }
+    // let dc = { r: 0.00001, i: -0.00001 }
+    // let scale = 1 / 200
+    // setInterval(() => {
+    //   c = complexAdd(c, dc)
+    //   scale *= 0.98
+    //   drawIteratee(makeJulia(c), scale)
+    // }, 50)
+
+    // Julia, click to zoom, adjust to modify.
+    const canvas = document.getElementById('canvas')
+    const ctx = canvas.getContext('2d')
+    const state = {
+      iteratee: null,
+      exposure: 0,
+      scale: 0,
+      offset: 0,
+      width: 0,
+      height: 0,
+      iterations: 0,
+      escapeValue: 0
+    }
+
+    const powerSlider = document.getElementById('power')
+    const crealSlider = document.getElementById('creal')
+    const cimagSlider = document.getElementById('cimag')
+    const updateStructure = () => {
+      // Read slider values
+      const power = parseInt(powerSlider.value)
+      const c = {
+        r: parseFloat(crealSlider.value),
+        i: parseFloat(cimagSlider.value)
+      }
+      // Rewrite labels
+      powerSlider.title = '' + power
+      crealSlider.title = c.r.toFixed(3)
+      cimagSlider.title = c.i.toFixed(3)
+      // Render
+      state.iteratee = makeJulia(power, c)
+    }
+    const renderStructure = () => {
+      updateStructure()
+      drawIteratee(ctx, state)
+    }
+    powerSlider.addEventListener('change', renderStructure)
+    crealSlider.addEventListener('change', renderStructure)
+    cimagSlider.addEventListener('change', renderStructure)
+
+    // Color
+    const exposSlider = document.getElementById('expos')
+    const exposMonitor = document.getElementById('exposmonitor')
+    const updateColor = () => {
+      state.exposure = parseFloat(exposSlider.value)
+      exposSlider.title = state.exposure.toFixed(2)
+      exposMonitor.innerHTML = state.exposure.toFixed(1)
+    }
+    const renderColor = () => {
+      updateColor()
+      drawIteratee(ctx, state)
+    }
+    exposSlider.addEventListener('change', renderColor)
+
+    // Position and viewport
+    const offrealControl = document.getElementById('offreal')
+    const offimagControl = document.getElementById('offimag')
+    const scaleControl = document.getElementById('scale')
+    const widthControl = document.getElementById('width')
+    const heightControl = document.getElementById('height')
+    const viewportButton = document.getElementById('viewport-button')
+    const viewportReset = document.getElementById('viewport-reset')
+    const updateViewport = () => {
+      state.offset = {
+        r: parseFloat(offrealControl.value),
+        i: parseFloat(offimagControl.value)
+      }
+      state.scale = parseInt(scaleControl.value)
+      state.width = parseInt(widthControl.value)
+      state.height = parseInt(heightControl.value)
+      offrealControl.title = state.offset.r
+      offimagControl.title = state.offset.i
+      scaleControl.title = state.scale
+      widthControl.title = state.width
+      heightControl.title = state.height
+      canvas.width = state.width
+      canvas.height = state.height
+    }
+    const renderViewport = () => {
+      updateViewport()
+      drawIteratee(ctx, state)
+    }
+    const resetViewport = () => {
+      offrealControl.value = 0
+      offimagControl.value = 0
+      scaleControl.value = 200
+      widthControl.value = 600
+      heightControl.value = 600
+      updateViewport()
+      drawIteratee(ctx, state)
+    }
+    viewportButton.addEventListener('click', renderViewport)
+    viewportReset.addEventListener('click', resetViewport)
+
+    // Pixel iteration
+    const iterationsControl = document.getElementById('iterations')
+    const escapeControl = document.getElementById('escape')
+    const iterationButton = document.getElementById('iteration-button')
+    const updateIteration = () => {
+      state.iterations = parseInt(iterationsControl.value)
+      state.escapeValue = parseInt(escapeControl.value)
+      iterationsControl.title = state.iterations
+      escapeControl.title = state.escapeValue
+    }
+    const renderIteration = () => {
+      updateIteration()
+      drawIteratee(ctx, state)
+    }
+    iterationButton.addEventListener('click', renderIteration)
+
+    // Click to zoom
+    canvas.addEventListener('click', (ev) => {
+      const x = ev.clientX
+      const y = ev.clientY
+      const z = pxToComplex(x, y, state.scale, state.offset)
+      state.scale = state.scale * 1.3
+      state.offset = z
+      offrealControl.value = z.r
+      offimagControl.value = z.i
+      scaleControl.value = state.scale
+      drawIteratee(ctx, state)
+    })
+
+    updateStructure()
+    updateColor()
+    updateViewport()
+    updateIteration()
+    drawIteratee(ctx, state)
+  })()
+  </script>
+
+</body></html>
