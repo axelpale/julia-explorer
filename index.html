@@ -11,6 +11,8 @@
   <canvas id="canvas" width="600" height="600">
   </canvas>
 
+  <p>Click to zoom in, shift+click to zoom out.</p>
+
   <h3>Julia Parameters</h3>
 
   <div>
@@ -467,11 +469,15 @@
       const x = ev.clientX
       const y = ev.clientY
       const z = pxToComplex(x, y, state.scale, state.offset)
-      state.scale = state.scale * 1.3
+      if (ev.altKey || ev.shiftKey) {
+        state.scale = state.scale * 0.8
+      } else {
+        state.scale = state.scale * 1.25
+      }
       state.offset = z
       offrealControl.value = z.r
       offimagControl.value = z.i
-      scaleControl.value = state.scale
+      scaleControl.value = state.scale.toFixed(0)
       drawIteratee(ctx, state)
     })
 
