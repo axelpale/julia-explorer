@@ -78,6 +78,8 @@
   <button type="button" id="viewport-button">Apply Viewport Settings</button>
   <button type="button" id="viewport-reset">Reset Viewport Settings</button>
 
+  <p id="viewport-waiting" style="display: none">RENDERING...</p>
+
   <h3>Pixel Iteration</h3>
 
   <p>Find if the julia sequence grows limitlessly (is divergent) or approaches some local point (is convergent).</p>
@@ -419,7 +421,7 @@
     }
     exposSlider.addEventListener('change', renderColor)
 
-    // Position and viewport
+    // Viewport and position
     const offrealControl = document.getElementById('offreal')
     const offimagControl = document.getElementById('offimag')
     const scaleControl = document.getElementById('scale')
@@ -427,6 +429,7 @@
     const heightControl = document.getElementById('height')
     const viewportButton = document.getElementById('viewport-button')
     const viewportReset = document.getElementById('viewport-reset')
+    const viewportWaiting = document.getElementById('viewport-waiting')
     const updateViewport = () => {
       state.offset = {
         r: parseFloat(offrealControl.value),
@@ -445,7 +448,12 @@
     }
     const renderViewport = () => {
       updateViewport()
-      drawIteratee(ctx, state)
+      viewportWaiting.style.display = 'block'
+      // Give browser a moment to refresh waiting message DOM
+      setTimeout(() => {
+        drawIteratee(ctx, state)
+        viewportWaiting.style.display = 'none'
+      }, 100)
     }
     const resetViewport = () => {
       offrealControl.value = 0
