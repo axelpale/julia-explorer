@@ -2,7 +2,7 @@
 <html><head>
   <meta charset="utf-8">
 
-  <title>Julia</title>
+  <title>Julia Fractal Explorer</title>
   <style>
     body { background: black; color: white; }
     .monitor { color: gray; }
@@ -376,11 +376,12 @@
     }
 
     const userFriendlyDrawIteratee = function (ctx, params) {
+      const originalTitle = document.title
       document.title = 'Julia RENDERING...'
       // Give browser a moment to refresh waiting message DOM
       setTimeout(() => {
         drawIteratee(ctx, state)
-        document.title = 'Julia'
+        document.title = originalTitle
       }, 100)
     }
 
