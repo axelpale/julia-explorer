@@ -13,6 +13,11 @@
 
   <p>Click to zoom in, shift+click to zoom out.</p>
 
+  <div>
+    <input type="checkbox" id="mousenavi" name="mousenavi" checked="checked">
+    <label for="mousenavi">Enable mouse navigation</label>
+  </div>
+
   <h3>Julia Parameters</h3>
 
   <div>
@@ -485,7 +490,12 @@
     iterationButton.addEventListener('click', renderIteration)
 
     // Click to zoom
+    const mousenaviCheckbox = document.getElementById('mousenavi')
     canvas.addEventListener('click', (ev) => {
+      if (!mousenaviCheckbox.checked) {
+        // Mouse navigation disabled
+        return
+      }
       const x = ev.clientX
       const y = ev.clientY
       const z = pxToComplex(x, y, state.scale, state.offset)
