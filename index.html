@@ -167,6 +167,21 @@
       }
     }
 
+    const complexDiff = function (x, y) {
+      return {
+        r: x.r - y.r,
+        i: x.i - y.i
+      }
+    }
+
+    const complexScale = function (z, m) {
+      // m, multiplier
+      return {
+        r: m * z.r,
+        i: m * z.i
+      }
+    }
+
     const complexMultiply = function (x, y) {
       // Parameters
       //   x
@@ -496,17 +511,23 @@
         // Mouse navigation disabled
         return
       }
+      const scaleFactor = 1.25
       const x = ev.clientX
       const y = ev.clientY
-      const z = pxToComplex(x, y, state.scale, state.offset)
+      const clickz = pxToComplex(x, y, state.scale, state.offset)
+      const centerz = state.offset
+      const dz = complexDiff(centerz, clickz)
       if (ev.altKey || ev.shiftKey) {
-        state.scale = state.scale * 0.8
+        // Zoom out, keep click position fixed
+        state.scale = state.scale / scaleFactor
+        state.offset = complexAdd(complexScale(dz, scaleFactor), clickz)
       } else {
-        state.scale = state.scale * 1.25
+        // Zoom in, keep click position fixed
+        state.scale = state.scale * scaleFactor
+        state.offset = complexAdd(complexScale(dz, 1 / scaleFactor), clickz)
       }
-      state.offset = z
-      offrealControl.value = z.r
-      offimagControl.value = z.i
+      offrealControl.value = state.offset.r
+      offimagControl.value = state.offset.i
       scaleControl.value = state.scale.toFixed(0)
       userFriendlyDrawIteratee(ctx, state)
     })
