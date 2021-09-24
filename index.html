@@ -11,12 +11,25 @@
   <canvas id="canvas" width="600" height="600">
   </canvas>
 
+  <div>
+    <button type="button" id="move-left">&larr; Left</button>
+    <button type="button" id="move-up">&uarr; Up</button>
+    <button type="button" id="move-down">Down &darr;</button>
+    <button type="button" id="move-right">Right &rarr;</button>
+  </div>
+  <div>
+    <button type="button" id="zoom-in">+ Zoom In</button>
+    <button type="button" id="zoom-out">Zoom Out &minus;</button>
+  </div>
+
   <p>Click to zoom in, shift+click to zoom out.</p>
 
-  <div>
-    <input type="checkbox" id="mousenavi" name="mousenavi" checked="checked">
-    <label for="mousenavi">Enable mouse navigation</label>
-  </div>
+  <p>
+    <div>
+      <input type="checkbox" id="mousenavi" name="mousenavi" checked="checked">
+      <label for="mousenavi">Enable mouse navigation</label>
+    </div>
+  </p>
 
   <h3>Julia Parameters</h3>
 
@@ -504,6 +517,40 @@
     }
     iterationButton.addEventListener('click', renderIteration)
 
+    // Navigation buttons
+    const leftButton = document.getElementById('move-left')
+    const upButton = document.getElementById('move-up')
+    const downButton = document.getElementById('move-down')
+    const rightButton = document.getElementById('move-right')
+    const zoomInButton = document.getElementById('zoom-in')
+    const zoomOutButton = document.getElementById('zoom-out')
+    const moveSpeed = 10
+    const scaleFactor = 1.25
+    const generateMove = function (dx, dy) {
+      return function () {
+        state.offset = {
+          r: state.offset.r + dx / state.scale,
+          i: state.offset.i + dy / state.scale
+        }
+        offrealControl.value = state.offset.r
+        offimagControl.value = state.offset.i
+        userFriendlyDrawIteratee(ctx, state)
+      }
+    }
+    const generateScale = function (factor) {
+      return function () {
+        state.scale = state.scale * factor
+        scaleControl.value = state.scale.toFixed(0)
+        userFriendlyDrawIteratee(ctx, state)
+      }
+    }
+    leftButton.addEventListener('click', generateMove(-moveSpeed, 0))
+    rightButton.addEventListener('click', generateMove(moveSpeed, 0))
+    upButton.addEventListener('click', generateMove(0, -moveSpeed))
+    downButton.addEventListener('click', generateMove(0, moveSpeed))
+    zoomInButton.addEventListener('click', generateScale(scaleFactor))
+    zoomOutButton.addEventListener('click', generateScale(1 / scaleFactor))
+
     // Click to zoom
     const mousenaviCheckbox = document.getElementById('mousenavi')
     canvas.addEventListener('click', (ev) => {
@@ -511,7 +558,6 @@
         // Mouse navigation disabled
         return
       }
-      const scaleFactor = 1.25
       const x = ev.clientX
       const y = ev.clientY
       const clickz = pxToComplex(x, y, state.scale, state.offset)
