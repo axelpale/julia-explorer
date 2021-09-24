@@ -558,8 +558,8 @@
         // Mouse navigation disabled
         return
       }
-      const x = ev.clientX
-      const y = ev.clientY
+      const x = ev.offsetX
+      const y = ev.offsetY
       const clickz = pxToComplex(x, y, state.scale, state.offset)
       const centerz = state.offset
       const dz = complexDiff(centerz, clickz)
