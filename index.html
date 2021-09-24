@@ -445,7 +445,7 @@
         'z<sub>n</sub>' +
         '<sup>' + power + '</sup> ' +
         (c.r < 0 ? '-' : '+') + ' ' + Math.abs(c.r).toFixed(3) + ' ' +
-        (c.i < 0 ? '-' : '+') + ' i' + Math.abs(c.i).toFixed(3)
+        (c.i < 0 ? '-' : '+') + ' ' + Math.abs(c.i).toFixed(3) + 'i'
       // Render
       state.iteratee = makeJulia(power, c)
     }
