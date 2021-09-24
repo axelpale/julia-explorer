@@ -78,8 +78,6 @@
   <button type="button" id="viewport-button">Apply Viewport Settings</button>
   <button type="button" id="viewport-reset">Reset Viewport Settings</button>
 
-  <p id="viewport-waiting" style="display: none">RENDERING...</p>
-
   <h3>Pixel Iteration</h3>
 
   <p>Find if the julia sequence grows limitlessly (is divergent) or approaches some local point (is convergent).</p>
@@ -342,6 +340,15 @@
       ctx.putImageData(img, 0, 0)
     }
 
+    const userFriendlyDrawIteratee = function (ctx, params) {
+      document.title = 'Julia RENDERING...'
+      // Give browser a moment to refresh waiting message DOM
+      setTimeout(() => {
+        drawIteratee(ctx, state)
+        document.title = 'Julia'
+      }, 100)
+    }
+
     // Draw single image.
     // Scale 200 for 600x600
     // Scale 400 for 1000x1000
@@ -401,7 +408,7 @@
     }
     const renderStructure = () => {
       updateStructure()
-      drawIteratee(ctx, state)
+      userFriendlyDrawIteratee(ctx, state)
     }
     powerSlider.addEventListener('change', renderStructure)
     crealSlider.addEventListener('change', renderStructure)
@@ -417,7 +424,7 @@
     }
     const renderColor = () => {
       updateColor()
-      drawIteratee(ctx, state)
+      userFriendlyDrawIteratee(ctx, state)
     }
     exposSlider.addEventListener('change', renderColor)
 
@@ -429,7 +436,6 @@
     const heightControl = document.getElementById('height')
     const viewportButton = document.getElementById('viewport-button')
     const viewportReset = document.getElementById('viewport-reset')
-    const viewportWaiting = document.getElementById('viewport-waiting')
     const updateViewport = () => {
       state.offset = {
         r: parseFloat(offrealControl.value),
@@ -448,12 +454,7 @@
     }
     const renderViewport = () => {
       updateViewport()
-      viewportWaiting.style.display = 'block'
-      // Give browser a moment to refresh waiting message DOM
-      setTimeout(() => {
-        drawIteratee(ctx, state)
-        viewportWaiting.style.display = 'none'
-      }, 100)
+      userFriendlyDrawIteratee(ctx, state)
     }
     const resetViewport = () => {
       offrealControl.value = 0
@@ -462,7 +463,7 @@
       widthControl.value = 600
       heightControl.value = 600
       updateViewport()
-      drawIteratee(ctx, state)
+      userFriendlyDrawIteratee(ctx, state)
     }
     viewportButton.addEventListener('click', renderViewport)
     viewportReset.addEventListener('click', resetViewport)
@@ -479,7 +480,7 @@
     }
     const renderIteration = () => {
       updateIteration()
-      drawIteratee(ctx, state)
+      userFriendlyDrawIteratee(ctx, state)
     }
     iterationButton.addEventListener('click', renderIteration)
 
@@ -497,7 +498,7 @@
       offrealControl.value = z.r
       offimagControl.value = z.i
       scaleControl.value = state.scale.toFixed(0)
-      drawIteratee(ctx, state)
+      userFriendlyDrawIteratee(ctx, state)
     })
 
     updateStructure()
