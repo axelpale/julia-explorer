@@ -57,6 +57,12 @@
   <h3>Color</h3>
 
   <div>
+    <select id="palette" name="palette">
+    </select>
+    <label for="colorscheme">Palette</label>
+  </div>
+
+  <div>
     <input type="range" id="expos" name="expos"
            min="0" max="16" value="4" step="0.5">
     <label for="expos">Exposure</label>
@@ -131,37 +137,38 @@
 
     const rgba = function (r, g, b, a) {
       return {
-        r: r,
-        g: g,
-        b: b,
-        a: a
+        r: limit(Math.round(r), 0, 255),
+        g: limit(Math.round(g), 0, 255),
+        b: limit(Math.round(b), 0, 255),
+        a: limit(Math.round(a), 0, 255)
       }
     }
-    const rainbow = function (l) {
-      l = limit(l, 0, 255)
-      return {
-        r: Math.floor(255 * Math.sin(Math.PI * 2 * l / 255)),
-        g: Math.floor(255 * Math.cos(Math.PI * 2 * l / 255)),
-        b: Math.floor(255 * Math.sin(Math.PI * l / 255)),
-        a: opaque
-      }
-    }
-    const flame = function (l) {
-      l = limit(l, 0, 255)
-      return {
-        r: limit(9 * l - 256, 0, 240) + 15,
-        g: limit(5 * l - 256, 0, 255),
-        b: limit(3 * l - 256, 0, 255),
-        a: opaque
-      }
-    }
-    const gray = function (l) {
-      l = limit(l, 0, 255)
-      return {
-        r: l,
-        g: l,
-        b: l,
-        a: opaque
+    // Available color palettes. Place the default palette first.
+    const palettes = {
+      flame: function (l) {
+        l = limit(l, 0, 255)
+        return {
+          r: limit(9 * l - 256, 0, 240) + 15,
+          g: limit(5 * l - 256, 0, 255),
+          b: limit(3 * l - 256, 0, 255),
+          a: opaque
+        }
+      },
+      rainbow: function (l) {
+        l = limit(l, 0, 255)
+        return {
+          r: Math.floor(255 * Math.sin(Math.PI * 2 * l / 255)),
+          g: Math.floor(255 * Math.cos(Math.PI * 2 * l / 255)),
+          b: Math.floor(255 * Math.sin(Math.PI * l / 255)),
+          a: opaque
+        }
+      },
+      gray: function (l) {
+        return rgba(l, l, l, opaque)
+      },
+      grayLooped: function (l) {
+        l = l % 256
+        return rgba(l, l, l, opaque)
       }
     }
 
@@ -345,10 +352,12 @@
       //       number
       //     offset
       //       { r, i }
-      //     smoothed
-      //       boolean
+      //     palette
+      //       string, palette name
       //     exposure
       //       number
+      //     smoothed
+      //       boolean
       //     iterations
       //       integer
       //     escapeValue
@@ -366,6 +375,7 @@
       const exposure = params.exposure
       const iterations = params.iterations
       const escapeValue = params.escapeValue
+      const colorFn = palettes[params.palette]
       forEachPixel(img, (imageData, x, y) => {
         // Normalize.
         const z = pxToComplex(x, y, scale, offset)
@@ -379,7 +389,7 @@
         })
         // Pick color
         const lightness = conv * exposure
-        const color = flame(lightness)
+        const color = colorFn(lightness)
         // Draw pixel
         setPixel(imageData, x, y, color)
       })
@@ -427,8 +437,9 @@
       offset: 0,
       width: 0,
       height: 0,
-      smoothed: false,
+      palette: '',
       exposure: 0,
+      smoothed: false,
       iterations: 0,
       escapeValue: 0
     }
@@ -473,10 +484,12 @@
     cimagSlider.addEventListener('change', renderStructure)
 
     // Color
+    const palettePicker = document.getElementById('palette')
     const smoothedCheck = document.getElementById('smoothed')
     const exposSlider = document.getElementById('expos')
     const exposMonitor = document.getElementById('exposmonitor')
     const updateColor = () => {
+      state.palette = palettePicker.value
       state.smoothed = smoothedCheck.checked
       state.exposure = parseFloat(exposSlider.value)
       exposSlider.title = state.exposure.toFixed(2)
@@ -486,8 +499,16 @@
       updateColor()
       userFriendlyDrawIteratee(ctx, state)
     }
+    palettePicker.addEventListener('change', renderColor)
     smoothedCheck.addEventListener('change', renderColor)
     exposSlider.addEventListener('change', renderColor)
+    // Setup palette options
+    Object.keys(palettes).forEach((key) => {
+      const opt = document.createElement('option')
+      opt.value = key
+      opt.innerHTML = key
+      palettePicker.appendChild(opt)
+    })
 
     // Viewport and position
     const offrealControl = document.getElementById('offreal')
