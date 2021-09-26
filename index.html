@@ -65,6 +65,11 @@
     <span id="exposmonitor" class="monitor"></span>
   </div>
 
+  <p>
+    <input type="checkbox" id="smoothed" name="smoothed">
+    <label for="smoothed">Smoothed</label>
+  </p>
+
   <h3>Viewport</h3>
 
   <div>
@@ -263,12 +268,15 @@
       //       integer
       //     escapeValue
       //       number
+      //     smoothed
+      //       boolean, false by default
       //
       // Return
-      //   number of iterations
+      //   number of iterations, float if smoothed, integer if not.
       //
       const iterations = params.iterations
       const valueLimit = params.escapeValue
+      const smoothed = params.smoothed ? true : false
       let val = params.init
       let i = 0
       let magnitude = 0
@@ -279,6 +287,10 @@
         i += 1
       } while (i < iterations && magnitude < valueLimit)
 
+      if (smoothed) {
+        // return i + Math.max(0, (magnitude - valueLimit) / valueLimit
+        return i + 1.8 - Math.log(magnitude) / Math.log(valueLimit)
+      }
       return i
     }
 
@@ -338,6 +350,8 @@
       //       number
       //     offset
       //       { r, i }
+      //     smoothed
+      //       boolean
       //     exposure
       //       number
       //     iterations
@@ -353,6 +367,7 @@
       const iteratee = params.iteratee
       const scale = params.scale
       const offset = params.offset
+      const smoothed = params.smoothed
       const exposure = params.exposure
       const iterations = params.iterations
       const escapeValue = params.escapeValue
@@ -364,7 +379,8 @@
           init: z,
           iteratee: iteratee,
           iterations: iterations,
-          escapeValue: escapeValue
+          escapeValue: escapeValue,
+          smoothed: smoothed
         })
         // Pick color
         const lightness = conv * exposure
@@ -412,11 +428,12 @@
     const ctx = canvas.getContext('2d')
     const state = {
       iteratee: null,
-      exposure: 0,
       scale: 0,
       offset: 0,
       width: 0,
       height: 0,
+      smoothed: false,
+      exposure: 0,
       iterations: 0,
       escapeValue: 0
     }
@@ -461,9 +478,11 @@
     cimagSlider.addEventListener('change', renderStructure)
 
     // Color
+    const smoothedCheck = document.getElementById('smoothed')
     const exposSlider = document.getElementById('expos')
     const exposMonitor = document.getElementById('exposmonitor')
     const updateColor = () => {
+      state.smoothed = smoothedCheck.checked
       state.exposure = parseFloat(exposSlider.value)
       exposSlider.title = state.exposure.toFixed(2)
       exposMonitor.innerHTML = state.exposure.toFixed(1)
@@ -472,6 +491,7 @@
       updateColor()
       userFriendlyDrawIteratee(ctx, state)
     }
+    smoothedCheck.addEventListener('change', renderColor)
     exposSlider.addEventListener('change', renderColor)
 
     // Viewport and position
