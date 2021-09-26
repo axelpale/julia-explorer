@@ -25,10 +25,8 @@
   <p>Click to zoom in, shift+click to zoom out.</p>
 
   <p>
-    <div>
-      <input type="checkbox" id="mousenavi" name="mousenavi" checked="checked">
-      <label for="mousenavi">Enable mouse navigation</label>
-    </div>
+    <input type="checkbox" id="mousenavi" name="mousenavi" checked="checked">
+    <label for="mousenavi">Enable mouse navigation</label>
   </p>
 
   <h3>Julia Parameters</h3>
@@ -65,10 +63,10 @@
     <span id="exposmonitor" class="monitor"></span>
   </div>
 
-  <p>
+  <div>
     <input type="checkbox" id="smoothed" name="smoothed">
     <label for="smoothed">Smoothed</label>
-  </p>
+  </div>
 
   <h3>Viewport</h3>
 
@@ -129,10 +127,7 @@
   (function () {
     const opaque = 255
     const sqrt = Math.sqrt
-
-    const limit = function (a, min, max) {
-      return Math.min(Math.max(a, min), max)
-    }
+    const limit = (a, min, max) => Math.min(Math.max(a, min), max)
 
     const rgba = function (r, g, b, a) {
       return {
