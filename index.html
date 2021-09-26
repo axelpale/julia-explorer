@@ -163,6 +163,9 @@
           a: opaque
         }
       },
+      monored: (l) => rgba(l, 0, 0, opaque),
+      monogreen: (l) => rgba(0, l, 0, opaque),
+      monoblue: (l) => rgba(0, 0, l, opaque),
       gray: function (l) {
         return rgba(l, l, l, opaque)
       },
