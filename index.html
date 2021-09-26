@@ -166,8 +166,8 @@
       gray: function (l) {
         return rgba(l, l, l, opaque)
       },
-      grayLooped: function (l) {
-        l = l % 256
+      grayloop: function (l) {
+        l = 128 * (Math.sin(2 * Math.PI * l / 256) + 1)
         return rgba(l, l, l, opaque)
       }
     }
