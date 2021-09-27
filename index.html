@@ -408,6 +408,23 @@
       return null
     }
 
+    // Julia, click to zoom, adjust to modify.
+    const canvas = document.getElementById('canvas')
+    const ctx = canvas.getContext('2d')
+    const state = {
+      power: 0,
+      c: { r: 0, i: 0 },
+      scale: 0,
+      offset: { r: 0, i: 0 },
+      width: 0,
+      height: 0,
+      palette: '',
+      exposure: 0,
+      smoothed: false,
+      iterations: 0,
+      escapeValue: 0
+    }
+
     const timerMonitor = document.getElementById('timer')
     const renderJulia = function (ctx, params) {
       // Ensure canvas size but prevent unnecessary reset to avoid flicker.
@@ -433,23 +450,6 @@
         // Resume to original title
         document.title = originalTitle
       }, 50)
-    }
-
-    // Julia, click to zoom, adjust to modify.
-    const canvas = document.getElementById('canvas')
-    const ctx = canvas.getContext('2d')
-    const state = {
-      power: 0,
-      c: { r: 0, i: 0 },
-      scale: 0,
-      offset: { r: 0, i: 0 },
-      width: 0,
-      height: 0,
-      palette: '',
-      exposure: 0,
-      smoothed: false,
-      iterations: 0,
-      escapeValue: 0
     }
 
     const powerSlider = document.getElementById('power')
