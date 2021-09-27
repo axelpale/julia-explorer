@@ -301,16 +301,6 @@
       } while (i < iterations && magnitude < valueLimit)
 
       if (smoothed) {
-        // return i + Math.max(0, (magnitude - valueLimit) / valueLimit
-        // return i + 1.8 - Math.log(magnitude) / Math.log(valueLimit)
-        // const maxMagnitude = complexAbs(iteratee({ r: valueLimit, i: 0 }))
-        // return i - Math.log(magnitude - valueLimit) / Math.log(maxMagnitude - valueLimit)
-        // return i - (magnitude - valueLimit) / (maxMagnitude - valueLimit)
-        // const power = Math.log(maxMagnitude) / Math.log(valueLimit)
-        // return i - Math.pow(magnitude, 1 / power)
-        // return i - Math.pow(magnitude, 1 / power) / valueLimit
-        // return i - magnitude / maxMagnitude
-        // return i - (Math.log(magnitude) / Math.log(valueLimit)) / (power)
         const exp = Math.log(magnitude) / Math.log(valueLimit)
         return i + 0.5 - (exp - 1) / (power - 1)
       }
