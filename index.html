@@ -231,16 +231,33 @@
     }
 
     const makeJulia = function (power, c) {
+      // More readable but slower code.
+      //   return function (z) {
+      //     // z^n
+      //     let product = z
+      //     for (let i = 1; i < power; i += 1) {
+      //       product = complexMultiply(product, z)
+      //     }
+      //     // z^n + c
+      //     return complexAdd(product, c)
+      //   }
       return function (z) {
-        // Loop instead of
-        // const z2 = complexMultiply(z, z)
-        // const z3 = complexMultiply(z2, z)
-        let product = z
+        // z^n
+        const zre = z.r
+        const zim = z.i
+        let re = z.r
+        let im = z.i
+        let pre = re
         for (let i = 1; i < power; i += 1) {
-          product = complexMultiply(product, z)
+          pre = re * zre - im * zim
+          im = (re + im) * (zre + zim) - re * zre - im * zim
+          re = pre
         }
         // z^n + c
-        return complexAdd(product, c)
+        return {
+          r: re + c.r,
+          i: im + c.i
+        }
       }
     }
 
