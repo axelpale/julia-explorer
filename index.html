@@ -279,26 +279,40 @@
       //       number
       //     smoothed
       //       boolean, false by default
+      //     power
+      //       integer, required for smoothing
       //
       // Return
       //   number of iterations, float if smoothed, integer if not.
       //
+      const iteratee = params.iteratee
       const iterations = params.iterations
       const valueLimit = params.escapeValue
       const smoothed = params.smoothed ? true : false
+      const power = params.power
       let val = params.init
       let i = 0
       let magnitude = 0
 
       do {
-        val = params.iteratee(val)
+        val = iteratee(val)
         magnitude = complexAbs(val)
         i += 1
       } while (i < iterations && magnitude < valueLimit)
 
       if (smoothed) {
         // return i + Math.max(0, (magnitude - valueLimit) / valueLimit
-        return i + 1.8 - Math.log(magnitude) / Math.log(valueLimit)
+        // return i + 1.8 - Math.log(magnitude) / Math.log(valueLimit)
+        // const maxMagnitude = complexAbs(iteratee({ r: valueLimit, i: 0 }))
+        // return i - Math.log(magnitude - valueLimit) / Math.log(maxMagnitude - valueLimit)
+        // return i - (magnitude - valueLimit) / (maxMagnitude - valueLimit)
+        // const power = Math.log(maxMagnitude) / Math.log(valueLimit)
+        // return i - Math.pow(magnitude, 1 / power)
+        // return i - Math.pow(magnitude, 1 / power) / valueLimit
+        // return i - magnitude / maxMagnitude
+        // return i - (Math.log(magnitude) / Math.log(valueLimit)) / (power)
+        const exp = Math.log(magnitude) / Math.log(valueLimit)
+        return i + 0.5 - (exp - 1) / (power - 1)
       }
       return i
     }
@@ -384,6 +398,9 @@
       const escapeValue = params.escapeValue
       const colorFn = palettes[params.palette]
 
+      // Pre-detect iteratee power for smoothing
+      const power = Math.log(complexAbs(iteratee({ r: 2, i: 0 }))) / Math.log(2)
+
       // Compute each pixel
       forEachPixel(img, (imageData, x, y) => {
         // Normalize.
@@ -394,7 +411,8 @@
           iteratee: iteratee,
           iterations: iterations,
           escapeValue: escapeValue,
-          smoothed: smoothed
+          smoothed: smoothed,
+          power: power
         })
         // Pick color
         const lightness = conv * exposure
