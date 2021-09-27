@@ -345,12 +345,12 @@
       //   ctx
       //     drawing context
       //   params
+      //     iteratee
+      //       fn { r, i } => { r, i }
       //     width
       //       integer
       //     height
       //       integer
-      //     iteratee
-      //       fn { r, i } => { r, i }
       //     scale
       //       number
       //     offset
@@ -370,7 +370,7 @@
       // Begin with empty canvas
       const img = ctx.getImageData(0, 0, params.width, params.height)
 
-      // Compute each pixel
+      // Extract args
       const iteratee = params.iteratee
       const scale = params.scale
       const offset = params.offset
@@ -379,6 +379,8 @@
       const iterations = params.iterations
       const escapeValue = params.escapeValue
       const colorFn = palettes[params.palette]
+
+      // Compute each pixel
       forEachPixel(img, (imageData, x, y) => {
         // Normalize.
         const z = pxToComplex(x, y, scale, offset)
@@ -401,12 +403,16 @@
       ctx.putImageData(img, 0, 0)
     }
 
-    const userFriendlyDrawIteratee = function (ctx, params) {
+    const renderJulia = function (ctx, params) {
       const originalTitle = document.title
       document.title = 'Julia RENDERING...'
       // Give browser a moment to refresh waiting message DOM
       setTimeout(() => {
-        drawIteratee(ctx, state)
+        // Create iteratee
+        const iteratee = makeJulia(params.power, params.c)
+        drawIteratee(ctx, Object.assign({}, params, {
+          iteratee: iteratee
+        }))
         document.title = originalTitle
       }, 50)
     }
@@ -435,9 +441,10 @@
     const canvas = document.getElementById('canvas')
     const ctx = canvas.getContext('2d')
     const state = {
-      iteratee: null,
+      power: 0,
+      c: { r: 0, i: 0 },
       scale: 0,
-      offset: 0,
+      offset: { r: 0, i: 0 },
       width: 0,
       height: 0,
       palette: '',
@@ -456,31 +463,31 @@
     const powerMonitor = document.getElementById('powermonitor')
     const updateStructure = () => {
       // Read slider values
-      const power = parseInt(powerSlider.value)
-      const c = {
+      state.power = parseInt(powerSlider.value)
+      state.c = {
         r: parseFloat(crealSlider.value),
         i: parseFloat(cimagSlider.value)
       }
       // Rewrite labels
-      powerSlider.title = '' + power
-      crealSlider.title = c.r.toFixed(3)
-      cimagSlider.title = c.i.toFixed(3)
+      powerSlider.title = '' + state.power
+      crealSlider.title = state.c.r.toFixed(3)
+      cimagSlider.title = state.c.i.toFixed(3)
       powerMonitor.innerHTML = powerSlider.title
       crealMonitor.innerHTML = crealSlider.title
       cimagMonitor.innerHTML = cimagSlider.title
       // Rewrite equation
 
+      const re = state.c.r
+      const im = state.c.i
       equationMonitor.innerHTML = 'z<sub>n+1</sub> = ' +
         'z<sub>n</sub>' +
-        '<sup>' + power + '</sup> ' +
-        (c.r < 0 ? '-' : '+') + ' ' + Math.abs(c.r).toFixed(3) + ' ' +
-        (c.i < 0 ? '-' : '+') + ' ' + Math.abs(c.i).toFixed(3) + 'i'
-      // Render
-      state.iteratee = makeJulia(power, c)
+        '<sup>' + state.power + '</sup> ' +
+        (re < 0 ? '-' : '+') + ' ' + Math.abs(re).toFixed(3) + ' ' +
+        (im < 0 ? '-' : '+') + ' ' + Math.abs(im).toFixed(3) + 'i'
     }
     const renderStructure = () => {
       updateStructure()
-      userFriendlyDrawIteratee(ctx, state)
+      renderJulia(ctx, state)
     }
     powerSlider.addEventListener('change', renderStructure)
     crealSlider.addEventListener('change', renderStructure)
@@ -500,7 +507,7 @@
     }
     const renderColor = () => {
       updateColor()
-      userFriendlyDrawIteratee(ctx, state)
+      renderJulia(ctx, state)
     }
     palettePicker.addEventListener('change', renderColor)
     smoothedCheck.addEventListener('change', renderColor)
@@ -539,7 +546,7 @@
     }
     const renderViewport = () => {
       updateViewport()
-      userFriendlyDrawIteratee(ctx, state)
+      renderJulia(ctx, state)
     }
     const resetViewport = () => {
       offrealControl.value = 0
@@ -548,7 +555,7 @@
       widthControl.value = 600
       heightControl.value = 600
       updateViewport()
-      userFriendlyDrawIteratee(ctx, state)
+      renderJulia(ctx, state)
     }
     viewportButton.addEventListener('click', renderViewport)
     viewportReset.addEventListener('click', resetViewport)
@@ -565,7 +572,7 @@
     }
     const renderIteration = () => {
       updateIteration()
-      userFriendlyDrawIteratee(ctx, state)
+      renderJulia(ctx, state)
     }
     iterationButton.addEventListener('click', renderIteration)
 
@@ -586,14 +593,14 @@
         }
         offrealControl.value = state.offset.r
         offimagControl.value = state.offset.i
-        userFriendlyDrawIteratee(ctx, state)
+        renderJulia(ctx, state)
       }
     }
     const generateScale = function (factor) {
       return function () {
         state.scale = state.scale * factor
         scaleControl.value = state.scale.toFixed(0)
-        userFriendlyDrawIteratee(ctx, state)
+        renderJulia(ctx, state)
       }
     }
     leftButton.addEventListener('click', generateMove(-moveSpeed, 0))
@@ -627,14 +634,14 @@
       offrealControl.value = state.offset.r
       offimagControl.value = state.offset.i
       scaleControl.value = state.scale.toFixed(0)
-      userFriendlyDrawIteratee(ctx, state)
+      renderJulia(ctx, state)
     })
 
     updateStructure()
     updateColor()
     updateViewport()
     updateIteration()
-    drawIteratee(ctx, state)
+    renderJulia(ctx, state)
   })()
   </script>
 
