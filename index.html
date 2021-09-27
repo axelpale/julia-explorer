@@ -403,7 +403,24 @@
       ctx.putImageData(img, 0, 0)
     }
 
+    const saveState = function (obj) {
+      const str = JSON.stringify(obj)
+      window.localStorage.setItem('julia-explorer', str)
+    }
+
+    const loadState = function () {
+      const str = window.localStorage.getItem('julia-explorer')
+      if (str) {
+        return JSON.parse(str)
+      }
+      return null
+    }
+
     const renderJulia = function (ctx, params) {
+      // Ensure canvas size
+      canvas.width = state.width
+      canvas.height = state.height
+      // Temporary title
       const originalTitle = document.title
       document.title = 'Julia RENDERING...'
       // Give browser a moment to refresh waiting message DOM
@@ -441,22 +458,19 @@
     const cimagMonitor = document.getElementById('cimagmonitor')
     const crealMonitor = document.getElementById('crealmonitor')
     const powerMonitor = document.getElementById('powermonitor')
-    const updateStructure = () => {
-      // Read slider values
+    const applyStructureForm = () => {
       state.power = parseInt(powerSlider.value)
       state.c = {
         r: parseFloat(crealSlider.value),
         i: parseFloat(cimagSlider.value)
       }
+    }
+    const updateStructureLabels = () => {
       // Rewrite labels
-      powerSlider.title = '' + state.power
-      crealSlider.title = state.c.r.toFixed(3)
-      cimagSlider.title = state.c.i.toFixed(3)
-      powerMonitor.innerHTML = powerSlider.title
-      crealMonitor.innerHTML = crealSlider.title
-      cimagMonitor.innerHTML = cimagSlider.title
+      powerMonitor.innerHTML = '' + state.power
+      crealMonitor.innerHTML = state.c.r.toFixed(3)
+      cimagMonitor.innerHTML = state.c.i.toFixed(3)
       // Rewrite equation
-
       const re = state.c.r
       const im = state.c.i
       equationMonitor.innerHTML = 'z<sub>n+1</sub> = ' +
@@ -465,8 +479,16 @@
         (re < 0 ? '-' : '+') + ' ' + Math.abs(re).toFixed(3) + ' ' +
         (im < 0 ? '-' : '+') + ' ' + Math.abs(im).toFixed(3) + 'i'
     }
+    const writeStructureForm = () => {
+      powerSlider.value = state.power
+      crealSlider.value = state.c.r
+      cimagSlider.value = state.c.i
+      updateStructureLabels()
+    }
     const renderStructure = () => {
-      updateStructure()
+      applyStructureForm()
+      updateStructureLabels()
+      saveState(state)
       renderJulia(ctx, state)
     }
     powerSlider.addEventListener('change', renderStructure)
@@ -478,15 +500,25 @@
     const smoothedCheck = document.getElementById('smoothed')
     const exposSlider = document.getElementById('expos')
     const exposMonitor = document.getElementById('exposmonitor')
-    const updateColor = () => {
+    const applyColorForm = () => {
       state.palette = palettePicker.value
       state.smoothed = smoothedCheck.checked
       state.exposure = parseFloat(exposSlider.value)
+    }
+    const updateColorLabels = () => {
       exposSlider.title = state.exposure.toFixed(2)
       exposMonitor.innerHTML = state.exposure.toFixed(1)
     }
+    const writeColorForm = () => {
+      palettePicker.value = state.palette
+      smoothedCheck.checked = state.smoothed
+      exposSlider.value = state.exposure
+      updateColorLabels()
+    }
     const renderColor = () => {
-      updateColor()
+      applyColorForm()
+      updateColorLabels()
+      saveState(state)
       renderJulia(ctx, state)
     }
     palettePicker.addEventListener('change', renderColor)
@@ -508,7 +540,7 @@
     const heightControl = document.getElementById('height')
     const viewportButton = document.getElementById('viewport-button')
     const viewportReset = document.getElementById('viewport-reset')
-    const updateViewport = () => {
+    const applyViewportForm = () => {
       state.offset = {
         r: parseFloat(offrealControl.value),
         i: parseFloat(offimagControl.value)
@@ -516,16 +548,17 @@
       state.scale = parseInt(scaleControl.value)
       state.width = parseInt(widthControl.value)
       state.height = parseInt(heightControl.value)
-      offrealControl.title = state.offset.r
-      offimagControl.title = state.offset.i
-      scaleControl.title = state.scale
-      widthControl.title = state.width
-      heightControl.title = state.height
-      canvas.width = state.width
-      canvas.height = state.height
+    }
+    const writeViewportForm = () => {
+      offrealControl.value = state.offset.r
+      offimagControl.value = state.offset.i
+      scaleControl.value = state.scale.toFixed(0)
+      widthControl.value = state.width
+      heightControl.value = state.height
     }
     const renderViewport = () => {
-      updateViewport()
+      applyViewportForm()
+      saveState(state)
       renderJulia(ctx, state)
     }
     const resetViewport = () => {
@@ -534,7 +567,8 @@
       scaleControl.value = 200
       widthControl.value = 600
       heightControl.value = 600
-      updateViewport()
+      applyViewportForm()
+      saveState(state)
       renderJulia(ctx, state)
     }
     viewportButton.addEventListener('click', renderViewport)
@@ -544,14 +578,17 @@
     const iterationsControl = document.getElementById('iterations')
     const escapeControl = document.getElementById('escape')
     const iterationButton = document.getElementById('iteration-button')
-    const updateIteration = () => {
+    const writeIterationForm = () => {
+      iterationsControl.value = state.iterations
+      escapeControl.value = state.escapeValue
+    }
+    const applyIterationForm = () => {
       state.iterations = parseInt(iterationsControl.value)
       state.escapeValue = parseInt(escapeControl.value)
-      iterationsControl.title = state.iterations
-      escapeControl.title = state.escapeValue
     }
     const renderIteration = () => {
-      updateIteration()
+      applyIterationForm()
+      saveState(state)
       renderJulia(ctx, state)
     }
     iterationButton.addEventListener('click', renderIteration)
@@ -571,15 +608,16 @@
           r: state.offset.r + dx / state.scale,
           i: state.offset.i + dy / state.scale
         }
-        offrealControl.value = state.offset.r
-        offimagControl.value = state.offset.i
+        writeViewportForm()
+        saveState(state)
         renderJulia(ctx, state)
       }
     }
     const generateScale = function (factor) {
       return function () {
         state.scale = state.scale * factor
-        scaleControl.value = state.scale.toFixed(0)
+        writeViewportForm()
+        saveState(state)
         renderJulia(ctx, state)
       }
     }
@@ -611,16 +649,28 @@
         state.scale = state.scale * scaleFactor
         state.offset = complexAdd(complexScale(dz, 1 / scaleFactor), clickz)
       }
-      offrealControl.value = state.offset.r
-      offimagControl.value = state.offset.i
-      scaleControl.value = state.scale.toFixed(0)
+      writeViewportForm()
+      saveState(state)
       renderJulia(ctx, state)
     })
 
-    updateStructure()
-    updateColor()
-    updateViewport()
-    updateIteration()
+    const storedState = loadState()
+    if (storedState) {
+      Object.assign(state, storedState)
+      // Update form to match the stored state.
+      writeStructureForm()
+      writeColorForm()
+      writeViewportForm()
+      writeIterationForm()
+    } else {
+      // Read state from the form
+      applyStructureForm()
+      updateStructureLabels()
+      applyColorForm()
+      updateColorLabels()
+      applyViewportForm()
+      applyIterationForm()
+    }
     renderJulia(ctx, state)
   })()
   </script>
