@@ -421,9 +421,11 @@
     }
 
     const renderJulia = function (ctx, params) {
-      // Ensure canvas size
-      canvas.width = state.width
-      canvas.height = state.height
+      // Ensure canvas size but prevent unnecessary reset to avoid flicker.
+      if (canvas.width !== state.width || canvas.height !== state.height) {
+        canvas.width = state.width
+        canvas.height = state.height
+      }
       // Temporary title
       const originalTitle = document.title
       document.title = 'Julia RENDERING...'
