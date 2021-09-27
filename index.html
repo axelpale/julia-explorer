@@ -512,7 +512,6 @@
       state.exposure = parseFloat(exposSlider.value)
     }
     const updateColorLabels = () => {
-      exposSlider.title = state.exposure.toFixed(2)
       exposMonitor.innerHTML = state.exposure.toFixed(1)
     }
     const writeColorForm = () => {
