@@ -228,28 +228,6 @@
       }
     }
 
-    const complexSqrt = function (z) {
-      const abs = complexAbs(z)
-      const r = sqrt((z.r + abs) / 2)
-      const i = Math.sign(z.i) * sqrt((-z.r + abs) / 2)
-      // There are two roots.
-      // TODO use some standard method to pick one
-      return {
-        r: r,
-        i: i
-      }
-      // if (z.i >= 0) {
-      //   return {
-      //     r: r,
-      //     i: i
-      //   }
-      // } // else
-      // return {
-      //   r: -r,
-      //   i: -i
-      // }
-    }
-
     const makeJulia = function (power, c) {
       return function (z) {
         // Loop instead of
