@@ -33,6 +33,8 @@
     <label for="mousenavi">Enable mouse navigation</label>
   </p>
 
+  <p>Rendered in <span id="timer">0</span> milliseconds</p>
+
   <h3>Julia Parameters</h3>
 
   <p id="equation"></p>
@@ -406,6 +408,7 @@
       return null
     }
 
+    const timerMonitor = document.getElementById('timer')
     const renderJulia = function (ctx, params) {
       // Ensure canvas size but prevent unnecessary reset to avoid flicker.
       if (canvas.width !== state.width || canvas.height !== state.height) {
@@ -419,9 +422,15 @@
       setTimeout(() => {
         // Create iteratee
         const iteratee = makeJulia(params.power, params.c)
+        // Render and measure rendering time
+        const beginTime = performance.now()
         drawIteratee(ctx, Object.assign({}, params, {
           iteratee: iteratee
         }))
+        const finishTime = performance.now()
+        const elapsedTime = finishTime - beginTime // milliseconds
+        timerMonitor.innerHTML = elapsedTime.toFixed(0)
+        // Resume to original title
         document.title = originalTitle
       }, 50)
     }
