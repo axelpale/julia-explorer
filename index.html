@@ -161,6 +161,31 @@
         a: limit(Math.round(a), 0, 255)
       }
     }
+
+    const gradient = function (m, fromColor, toColor) {
+      // Parameters
+      //   m
+      //     number 0..1
+      //   fromColor
+      //     rgba
+      //   toColor
+      //     rgba
+      //
+      m = limit(m, 0, 1)
+      return rgba(
+        (1 - m) * fromColor.r + m * toColor.r,
+        (1 - m) * fromColor.g + m * toColor.g,
+        (1 - m) * fromColor.b + m * toColor.b,
+        (1 - m) * fromColor.a + m * toColor.a
+      )
+    }
+
+    // https://htmlcolorcodes.com/color-names/
+    const deepSkyBlue = rgba(0, 191, 255, opaque)
+    const lightSkyBlue = rgba(135, 206, 250, opaque)
+    const whiteSmoke = rgba(245, 245, 245, opaque)
+    const slateGray = rgba(112, 128, 144, opaque)
+
     // Available color palettes. Place the default palette first.
     const palettes = {
       flame: function (l) {
@@ -180,6 +205,15 @@
           b: Math.floor(255 * Math.sin(Math.PI * l / 255)),
           a: opaque
         }
+      },
+      clouds: (l) => {
+        if (l < 20) {
+          return gradient(l / 20, deepSkyBlue, lightSkyBlue)
+        }
+        if (l < 30) {
+          return gradient((l - 20) / 10, lightSkyBlue, whiteSmoke)
+        }
+        return gradient((l - 30) / (255 - 30), whiteSmoke, slateGray)
       },
       monored: (l) => rgba(l, 0, 0, opaque),
       monogreen: (l) => rgba(0, l, 0, opaque),
