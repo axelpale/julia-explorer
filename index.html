@@ -131,6 +131,18 @@
 
   <button type="button" id="iteration-button">Apply Iteration Settings</button>
 
+  <h3>Fractal Dimension</h3>
+
+  <p>This tool estimates a fractal dimension for the visible portion of the image using the box-counting method.</p>
+
+  <p id="boxcount-counts"></p>
+  <p id="boxcount-dimensions"></p>
+
+  <p>Box-counting dimension: <span id="boxcount-estimate">0</span></p>
+
+  <p><button type="button" id="boxcount-button">Compute</button>
+  </p>
+
   <div style="height: 6rem"></div>
 
   <p>See the source at <a href="https://github.com/axelpale/julia-explorer" target="_blank">axelpale/julia-explorer</a> on GitHub</p>
@@ -178,15 +190,36 @@
       grayloop: function (l) {
         l = 128 * (Math.sin(2 * Math.PI * l / 256) + 1)
         return rgba(l, l, l, opaque)
+      },
+      blackwhite: (l) => {
+        if (l > 128) {
+          return rgba(255, 255, 255, opaque)
+        }
+        return rgba(0, 0, 0, opaque)
+      }
+    }
+
+    const getPixel = function (imageData, x, y) {
+      const index = 4 * (x + y * imageData.width)
+      return {
+        r: imageData.data[index + 0],
+        g: imageData.data[index + 1],
+        b: imageData.data[index + 2],
+        a: imageData.data[index + 3]
       }
     }
 
     const setPixel = function (imageData, x, y, color) {
-      var index = 4 * (x + y * imageData.width)
-      imageData.data[index+0] = color.r
-      imageData.data[index+1] = color.g
-      imageData.data[index+2] = color.b
-      imageData.data[index+3] = color.a
+      const index = 4 * (x + y * imageData.width)
+      imageData.data[index + 0] = color.r
+      imageData.data[index + 1] = color.g
+      imageData.data[index + 2] = color.b
+      imageData.data[index + 3] = color.a
+    }
+
+    const pixelLightness = function (rgba) {
+      // Linear lightness 0..255
+      return Math.round((rgba.r + rgba.g + rgba.b) / 3)
     }
 
     const complexAbs = function (z) {
@@ -609,6 +642,97 @@
       renderJulia(ctx, state)
     }
     iterationButton.addEventListener('click', renderIteration)
+
+    // Box-counting fractal dimension
+    const boxcountCounts = document.getElementById('boxcount-counts')
+    const boxcountDims = document.getElementById('boxcount-dimensions')
+    const boxcountEstimate = document.getElementById('boxcount-estimate')
+    const boxcountButton = document.getElementById('boxcount-button')
+    const hasBoxLightAndDarkPixel = (imageData, x0, y0, x1, y1) => {
+      // Tests if rectangular area of the given image
+      // has any pixels lighter than 128.
+      let hasLight = false
+      let hasDark = false
+      let x, y, px
+      for (y = y0; y < y1; y += 1) {
+        for (x = x0; x < x1; x += 1) {
+          px = getPixel(imageData, x, y)
+          if (pixelLightness(px) >= 128) {
+            hasLight = true
+          } else {
+            hasDark = true
+          }
+          if (hasLight && hasDark) {
+            return true
+          }
+        }
+      }
+      // Only light pixels or only dark pixels
+      return false
+    }
+    const renderBoxcount = () => {
+      // Size of largest box
+      const initSize = 64
+      const minSize = 4
+      // Image dimensions. Include only full boxes
+      const w = initSize * Math.floor(canvas.width / initSize)
+      const h = initSize * Math.floor(canvas.height / initSize)
+      // Include only full boxes
+      const img = ctx.getImageData(0, 0, w, h)
+      // Store box counts: size => count
+      const counts = []
+      // Loop through sizes, half the size per iteration
+      for (let size = initSize; size >= minSize; size = size / 2) {
+        // Init count
+        const count = {
+          size: size,
+          boxes: 0,
+          total: 0,
+        }
+        // For each box. Note that no partial boxes are allowed.
+        for (let byi = 0; byi * size < h; byi += 1) {
+          for (let bxi = 0; bxi * size < w; bxi += 1) {
+            // Count the box in if it contains a pixel in and out the julia set
+            let x0 = bxi * size
+            let y0 = byi * size
+            let x1 = x0 + size
+            let y1 = y0 + size
+            count.total += 1
+            if (hasBoxLightAndDarkPixel(img, x0, y0, x1, y1)) {
+              count.boxes += 1
+            }
+            // If the box contains no pixels of the set, count is as zero.
+            // TODO skip boxes already determined as only dark or only light.
+          }
+        }
+        // Precompute log(n) and log(1/s) for analysis,
+        // where n is num of boxes, and s the normalized image size
+        count.logn = Math.log(count.boxes)
+        count.logs = -Math.log(size / w) // NOTE assumes image to be square
+        counts.push(count)
+      }
+      // List the counts
+      boxcountCounts.innerHTML = counts.reduce((str, count) => {
+        return str + count.size + ': ' + count.boxes + ' of ' + count.total +
+          '<br>'
+      }, '')
+      // List the dimensions of the counts
+      boxcountDims.innerHTML = counts.reduce((str, count) => {
+        const dim = count.logn / count.logs
+        return str + count.size + ': log(n) = ' + count.logn.toFixed(3) + ', ' +
+          'log(1/s) = ' + count.logs.toFixed(3) + ', ' +
+          'dim = ' + dim.toFixed(3) + '<br>'
+      }, '')
+      // Estimate the dimension using linear regression and least squares
+      const regression = counts.reduce((reg, count) => {
+        reg.sumxy += count.logs * count.logn
+        reg.sumxx += count.logs * count.logs
+        return reg
+      }, { sumxy: 0, sumxx: 0 })
+      const estimate = regression.sumxy / regression.sumxx
+      boxcountEstimate.innerHTML = estimate.toFixed(3)
+    }
+    boxcountButton.addEventListener('click', renderBoxcount)
 
     // Navigation buttons
     const leftButton = document.getElementById('move-left')
