@@ -40,24 +40,28 @@
   <p id="equation"></p>
 
   <div>
-    <input type="range" id="power" name="power"
+    <input type="number" min="-2" max="2" value="0" id="power-number"
+           style="width: 5rem">
+    <input type="range" id="power-slider" name="power-slider"
            min="2" max="10" value="2" step="1">
-    <label for="power">z^</label>
+    <label for="power-number">z^</label>
     <span id="powermonitor" class="monitor"></span>
   </div>
 
   <div>
-    <input type="range" id="creal" name="creal"
-           min="-2" max="2" value="0" step="0.001" style="width: 32rem">
-    <label for="creal">Re(c)</label>
-    <span id="crealmonitor" class="monitor"></span>
+    <input type="number" min="-2" max="2" value="0" id="creal-number"
+           style="width: 5rem">
+    <input type="range" id="creal-slider" name="creal-slider"
+           min="-2" max="2" value="0" step="0.001" style="width: 30rem">
+    <label for="creal-number">Re(c)</label>
   </div>
 
   <div>
-    <input type="range" id="cimag" name="cimag"
-           min="-2" max="2" value="1" step="0.001" style="width: 32rem">
-    <label for="cimag">Im(c)</label>
-    <span id="cimagmonitor" class="monitor"></span>
+    <input type="number" min="-2" max="2" value="0" id="cimag-number"
+           style="width: 5rem">
+    <input type="range" id="cimag-slider" name="cimag-slider"
+           min="-2" max="2" value="1" step="0.001" style="width: 30rem">
+    <label for="cimag-number">Im(c)</label>
   </div>
 
   <h3>Color</h3>
@@ -536,25 +540,24 @@
       }, 50)
     }
 
-    const powerSlider = document.getElementById('power')
-    const crealSlider = document.getElementById('creal')
-    const cimagSlider = document.getElementById('cimag')
+    const powerSlider = document.getElementById('power-slider')
+    const crealSlider = document.getElementById('creal-slider')
+    const cimagSlider = document.getElementById('cimag-slider')
     const equationMonitor = document.getElementById('equation')
-    const cimagMonitor = document.getElementById('cimagmonitor')
-    const crealMonitor = document.getElementById('crealmonitor')
+    const powerNumber = document.getElementById('power-number')
+    const crealNumber = document.getElementById('creal-number')
+    const cimagNumber = document.getElementById('cimag-number')
     const powerMonitor = document.getElementById('powermonitor')
     const applyStructureForm = () => {
-      state.power = parseInt(powerSlider.value)
+      state.power = parseInt(powerNumber.value)
       state.c = {
-        r: parseFloat(crealSlider.value),
-        i: parseFloat(cimagSlider.value)
+        r: parseFloat(crealNumber.value),
+        i: parseFloat(cimagNumber.value)
       }
     }
     const updateStructureLabels = () => {
       // Rewrite labels
       powerMonitor.innerHTML = '' + state.power
-      crealMonitor.innerHTML = state.c.r.toFixed(3)
-      cimagMonitor.innerHTML = state.c.i.toFixed(3)
       // Rewrite equation
       const re = state.c.r
       const im = state.c.i
@@ -565,6 +568,9 @@
         (im < 0 ? '-' : '+') + ' ' + Math.abs(im).toFixed(3) + 'i'
     }
     const writeStructureForm = () => {
+      powerNumber.value = state.power
+      crealNumber.value = state.c.r
+      cimagNumber.value = state.c.i
       powerSlider.value = state.power
       crealSlider.value = state.c.r
       cimagSlider.value = state.c.i
@@ -576,9 +582,28 @@
       saveState(state)
       renderJulia(ctx, state)
     }
-    powerSlider.addEventListener('change', renderStructure)
-    crealSlider.addEventListener('change', renderStructure)
-    cimagSlider.addEventListener('change', renderStructure)
+    const propagateSlider = () => {
+      // Copy slider values to number fields
+      powerNumber.value = powerSlider.value
+      crealNumber.value = crealSlider.value
+      cimagNumber.value = cimagSlider.value
+      // Then refresh everything elses.
+      renderStructure()
+    }
+    const propagateNumber = () => {
+      // Copy number values to slider fields
+      powerSlider.value = powerNumber.value
+      crealSlider.value = crealNumber.value
+      cimagSlider.value = cimagNumber.value
+      // Then refresh everything elses.
+      renderStructure()
+    }
+    powerSlider.addEventListener('change', propagateSlider)
+    crealSlider.addEventListener('change', propagateSlider)
+    cimagSlider.addEventListener('change', propagateSlider)
+    powerNumber.addEventListener('change', propagateNumber)
+    crealNumber.addEventListener('change', propagateNumber)
+    cimagNumber.addEventListener('change', propagateNumber)
 
     // Color
     const palettePicker = document.getElementById('palette')
