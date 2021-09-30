@@ -416,6 +416,39 @@
       }
     }
 
+    const semaphore = function (fn) {
+      // Async semaphore with 1-slot memory
+      let running = false
+      let memory = false
+      let ma, mb, mc, md
+      return function self(a, b, c, d) {
+        if (running) {
+          // Store latest rerun request.
+          memory = true
+          ma = a
+          mb = b
+          mc = c
+          md = d
+          return
+        }
+        // If not running
+        running = true
+        memory = false
+        fn(a, b, c, d)
+        // After running, check if rerun requested
+        // and rerun if so.
+        setTimeout(() => {
+          running = false
+          if (memory) {
+            memory = false
+            self(ma, mb, mc, md)
+          }
+        }, 0)
+      }
+    }
+
+    let drawIterateeNext = null
+    let drawIterateeRunning = false
     const drawIteratee = function (ctx, params) {
       // Parameters
       //   ctx
@@ -515,7 +548,7 @@
 
     const timerMonitor = document.getElementById('timer')
     const originalTitle = document.title
-    const renderJulia = function (ctx, params) {
+    const renderJulia = semaphore((ctx, params) => {
       // Ensure canvas size but prevent unnecessary reset to avoid flicker.
       if (canvas.width !== state.width || canvas.height !== state.height) {
         canvas.width = state.width
@@ -538,7 +571,7 @@
         // Resume to original title
         document.title = originalTitle
       }, 50)
-    }
+    })
 
     const powerSlider = document.getElementById('power-slider')
     const crealSlider = document.getElementById('creal-slider')
