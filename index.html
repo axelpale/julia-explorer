@@ -190,9 +190,11 @@
     const whiteSmoke = rgba(245, 245, 245, opaque)
     const slateGray = rgba(112, 128, 144, opaque)
     // Rose colors
+    const darkBlack = rgba(33, 39, 33, opaque)
     const darkBrown = rgba(49, 38, 29, opaque)
     const darkGreen = rgba(84, 98, 35, opaque)
     const leafGreen = rgba(100, 167, 11, opaque)
+    const darkRose = rgba(124, 37, 41, opaque)
     const roseRed = rgba(238, 39, 55, opaque)
     const pinkLips = rgba(224, 0, 77, opaque)
 
@@ -207,7 +209,44 @@
           a: opaque
         }
       },
-      rainbow: function (l) {
+      rose: (l) => {
+        const x0 = 0
+        const x1 = 80
+        const x2 = 128
+        const x3 = 200
+        const x4 = 255
+        // From x0 to x1
+        if (l < x1) {
+          return gradient((l - x0) / (x1 - x0), darkBlack, darkBrown)
+        }
+        if (l < x2) {
+          return gradient((l - x1) / (x2 - x1), darkBrown, darkRose)
+        }
+        if (l < x3) {
+          return gradient((l - x2) / (x3 - x2), darkRose, roseRed)
+        }
+        return gradient((l - x3) / (x4 - x3), roseRed, darkRose)
+      },
+      // TODO sea and island like gradient
+      // islands: (l) => {
+      //   const x0 = 0
+      //   const x1 = 80
+      //   const x2 = 128
+      //   const x3 = 250
+      //   const x4 = 255
+      //   // From x0 to x1
+      //   if (l < x1) {
+      //     return gradient((l - x0) / (x1 - x0), darkBlack, darkBrown)
+      //   }
+      //   if (l < x2) {
+      //     return gradient((l - x1) / (x2 - x1), darkBrown, darkRose)
+      //   }
+      //   if (l < x3) {
+      //     return gradient((l - x2) / (x3 - x2), darkRose, roseRed)
+      //   }
+      //   return gradient((l - x3) / (x4 - x3), roseRed, pinkLips)
+      // },
+      rainbow: (l) => {
         l = limit(l, 0, 255)
         return {
           r: Math.floor(255 * Math.sin(Math.PI * 2 * l / 255)),
