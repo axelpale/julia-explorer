@@ -257,25 +257,17 @@
         }
         return gradient((l - x3) / (x4 - x3), roseRed, darkRose)
       },
-      // TODO sea and island like gradient
-      // islands: (l) => {
-      //   const x0 = 0
-      //   const x1 = 80
-      //   const x2 = 128
-      //   const x3 = 250
-      //   const x4 = 255
-      //   // From x0 to x1
-      //   if (l < x1) {
-      //     return gradient((l - x0) / (x1 - x0), darkBlack, darkBrown)
-      //   }
-      //   if (l < x2) {
-      //     return gradient((l - x1) / (x2 - x1), darkBrown, darkRose)
-      //   }
-      //   if (l < x3) {
-      //     return gradient((l - x2) / (x3 - x2), darkRose, roseRed)
-      //   }
-      //   return gradient((l - x3) / (x4 - x3), roseRed, pinkLips)
-      // },
+      // Sea and island like gradient
+      islands: gradientSet([
+        rgba(0, 147, 225, opaque), // farSea
+        rgba(0, 168, 223, opaque), // midSea
+        rgba(1, 140, 154, opaque), // lowSea
+        rgba(255, 252, 201, opaque), // beachSand
+        rgba(201, 194, 179, opaque), // beachRock
+        rgba(130, 171, 35, opaque), // lightJungle
+        rgba(64, 94, 14, opaque) // darkJungle
+      ], [0, 12, 24, 68, 88, 100, 200]),
+      // Rainbow
       rainbow: (l) => {
         l = limit(l, 0, 255)
         return {
