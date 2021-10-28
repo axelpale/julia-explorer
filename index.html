@@ -156,6 +156,10 @@
     const opaque = 255
     const sqrt = Math.sqrt
     const limit = (a, min, max) => Math.min(Math.max(a, min), max)
+    const linear = (x, min, max) => {
+      // Return number, 0..1, where 0 when x==min and 1 when x==max
+      return (x - min) / (max - min)
+    }
 
     const rgba = function (r, g, b, a) {
       return {
