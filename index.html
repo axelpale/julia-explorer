@@ -262,11 +262,24 @@
         rgba(0, 147, 225, opaque), // farSea
         rgba(0, 168, 223, opaque), // midSea
         rgba(1, 140, 154, opaque), // lowSea
+        rgba(3, 169, 119, opaque), // beachSea
         rgba(255, 252, 201, opaque), // beachSand
-        rgba(201, 194, 179, opaque), // beachRock
+        rgba(255, 252, 201, opaque), // beachSand
+        rgba(64, 94, 14, opaque), // darkJungle
         rgba(130, 171, 35, opaque), // lightJungle
-        rgba(64, 94, 14, opaque) // darkJungle
-      ], [0, 12, 24, 68, 88, 100, 200]),
+        rgba(64, 94, 14, opaque), // darkJungle
+        rgba(100, 100, 107, opaque), // rock shadow
+        rgba(201, 194, 179, opaque), // beachRock,
+        rgba(40, 33, 33, opaque), // dark volcanic rock
+        rgba(237, 55, 31, opaque), // lava low
+        rgba(253, 233, 38, opaque), // lava high
+      ], [
+        5, 30, 80, 89, // water
+        90, 99, // beach
+        100, 123, 145, // jungle
+        150, 200, 250, // mountain
+        255, 350, // lava
+      ]),
       // Rainbow
       rainbow: (l) => {
         l = limit(l, 0, 255)
