@@ -188,6 +188,32 @@
       )
     }
 
+    const gradientSet = (colors, positions) => {
+      return (m) => {
+        // Parameters:
+        //   m
+        //     number 0..1
+        //
+
+        // Handle sweep begin
+        if (m < positions[0]) {
+          return colors[0]
+        }
+        // Begin
+
+        for (let i = 1; i < positions.length; i += 1) {
+          if (m < positions[i]) {
+            // Map along single gradient
+            let x = linear(m, positions[i - 1], positions[i])
+            return gradient(x, colors[i - 1], colors[i])
+          }
+        }
+
+        // Return last color
+        return colors[colors.length - 1]
+      }
+    }
+
     // https://htmlcolorcodes.com/color-names/
     const deepSkyBlue = rgba(0, 191, 255, opaque)
     const lightSkyBlue = rgba(135, 206, 250, opaque)
