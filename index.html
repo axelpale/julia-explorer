@@ -381,6 +381,17 @@
       }
     }
 
+    const gaussian = function () {
+      // Poor man's gaussian
+      let rand = 0;
+
+      for (var i = 0; i < 6; i += 1) {
+        rand += Math.random();
+      }
+
+      return rand / 6 - 0.5;
+    }
+
     const makeJulia = function (power, c) {
       // More readable but slower code.
       //   return function (z) {
